@@ -35,6 +35,9 @@ pyinstaller --clean --noconfirm ProxyToggle.spec
 python generate_icon.py
 ```
 
+`build.bat` 会在打包前自动定位当前 Python 自带的 Tcl/Tk 运行库，以避免部分
+Python 3.14 环境打包后出现 `No module named 'tkinter'`。建议通过该脚本构建。
+
 ## 开机自启原理
 
 勾选后，程序在当前用户注册表

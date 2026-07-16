@@ -1,5 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+import sys
+
+# Python 3.14 on Windows may not expose its bundled Tcl/Tk paths to
+# PyInstaller automatically. Set them before Analysis so the tkinter hook can
+# collect both the Python module and the Tcl/Tk runtime files.
+_tcl_root = os.path.join(sys.base_prefix, 'tcl')
+_tcl_library = os.path.join(_tcl_root, 'tcl8.6')
+_tk_library = os.path.join(_tcl_root, 'tk8.6')
+if os.path.isfile(os.path.join(_tcl_library, 'init.tcl')):
+    os.environ['TCL_LIBRARY'] = _tcl_library
+if os.path.isfile(os.path.join(_tk_library, 'tk.tcl')):
+    os.environ['TK_LIBRARY'] = _tk_library
+
 a = Analysis(
     ['main.py'],
     pathex=[],
