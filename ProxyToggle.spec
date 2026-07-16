@@ -1,11 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('assets/proxy_toggle.ico', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -23,6 +22,7 @@ exe = EXE(
     a.datas,
     [],
     name='ProxyToggle',
+    icon='assets/proxy_toggle.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

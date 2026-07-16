@@ -1,23 +1,17 @@
 # ProxyToggle
 
-一键开关 cmd 命令行代理的 Windows 小工具，支持自定义代理地址和端口。
+一键开关 Windows 命令行代理的小工具。
 
 ## 功能
 
-- 一键开启/关闭命令行代理（`HTTP_PROXY` / `HTTPS_PROXY` 用户环境变量）
-- 自定义代理地址和端口，配置自动保存到 `%APPDATA%\ProxyToggle\config.json`
-- 实时显示当前代理状态（绿色=已开启，红色=已关闭）
-- 系统托盘图标：关闭窗口自动缩到托盘，托盘右键可快速开关代理或退出
-- 不需要管理员权限（只修改当前用户的环境变量）
+- 一键设置或移除 `HTTP_PROXY` / `HTTPS_PROXY` 用户环境变量
+- 自定义代理地址和端口，配置保存在 `%APPDATA%\ProxyToggle\config.json`
+- 系统托盘快捷开关代理
+- 可选“开机时自动启动”，自启后静默进入系统托盘
+- 多分辨率应用图标，同时用于 EXE、窗口和系统托盘
+- 仅修改当前用户配置，不需要管理员权限
 
-## 原理
-
-写入/删除注册表 `HKCU\Environment` 下的 `HTTP_PROXY`、`HTTPS_PROXY`
-（及小写变体）环境变量，并广播 `WM_SETTINGCHANGE` 消息。
-git、curl、npm、pip、node 等命令行工具都会读取这组变量。
-
-> 注意：开关后仅对**新打开的** cmd / PowerShell 窗口生效，
-> 已打开的窗口不会自动刷新（Windows 机制限制）。
+代理设置只对新打开的 cmd、PowerShell 和其他命令行程序生效。
 
 ## 直接运行
 
@@ -26,22 +20,22 @@ pip install -r requirements.txt
 python main.py
 ```
 
-不安装 pystray/Pillow 也能运行，只是没有托盘图标（纯窗口模式）。
+## 打包 EXE
 
-## 打包为独立 exe
-
-双击运行 `build.bat`，或手动执行：
+双击 `build.bat`，或执行：
 
 ```bat
 pip install -r requirements.txt pyinstaller
-pyinstaller --onefile --noconsole --name ProxyToggle main.py
+pyinstaller --clean --noconfirm ProxyToggle.spec
 ```
 
-产物为 `dist\ProxyToggle.exe`（约 10-15 MB），单文件免安装，可拷到任何 Windows 电脑使用。
+产物位于 `dist\ProxyToggle.exe`。如需重新生成图标，可先运行：
 
-## 使用
+```bat
+python generate_icon.py
+```
 
-1. 启动后输入代理地址（默认 `127.0.0.1`）和端口（默认 `7890`）
-2. 点「开启代理」；新开一个 cmd 输入 `echo %HTTP_PROXY%` 验证
-3. 再点一次「关闭代理」即可移除
-4. 点窗口关闭按钮会缩到托盘，托盘右键 →「退出」才是真正退出
+## 开机自启原理
+
+勾选后，程序在当前用户注册表
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 中写入启动项；取消勾选后会删除该启动项。打包版开机启动时会携带 `--startup` 参数并直接缩到托盘。
