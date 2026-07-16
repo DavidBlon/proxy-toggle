@@ -29,6 +29,9 @@ CONFIG_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), AP
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 DEFAULT_CONFIG = {"host": "127.0.0.1", "port": "7890"}
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
+SINGLE_INSTANCE_MUTEX = r"Local\ProxyToggle.SingleInstance"
+ERROR_ALREADY_EXISTS = 183
+_instance_mutex = None
 
 
 def load_config():
@@ -126,6 +129,34 @@ def set_startup_enabled(enabled):
 def resource_path(relative_path):
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, relative_path)
+
+
+def acquire_single_instance():
+    """Return False when another ProxyToggle process already owns the mutex."""
+    global _instance_mutex
+    if os.name != "nt":
+        return True
+
+    kernel32 = ctypes.windll.kernel32
+    kernel32.CreateMutexW.restype = ctypes.c_void_p
+    mutex = kernel32.CreateMutexW(None, False, SINGLE_INSTANCE_MUTEX)
+    if not mutex:
+        return True
+    if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+        kernel32.CloseHandle(mutex)
+        _activate_existing_window()
+        return False
+    _instance_mutex = mutex
+    return True
+
+
+def _activate_existing_window():
+    """Restore the existing main window when the executable is opened again."""
+    user32 = ctypes.windll.user32
+    window = user32.FindWindowW(None, APP_NAME)
+    if window:
+        user32.ShowWindow(window, 9)  # SW_RESTORE
+        user32.SetForegroundWindow(window)
 
 
 class ProxyToggleApp:
@@ -280,4 +311,5 @@ def _make_tray_image(enabled):
 
 
 if __name__ == "__main__":
-    ProxyToggleApp().run()
+    if acquire_single_instance():
+        ProxyToggleApp().run()
