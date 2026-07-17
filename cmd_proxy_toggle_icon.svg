@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>命令行代理切换工具图标</title>
+<desc>一个圆角方形应用图标，内含终端符号和一个代理开关，开关左侧为灰色关闭状态，右侧为绿色开启状态</desc>
+<defs>
+<linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#1e2a4a"/>
+<stop offset="100%" stop-color="#0f172a"/>
+</linearGradient>
+<linearGradient id="knobGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#ffffff"/>
+<stop offset="100%" stop-color="#e2e8f0"/>
+</linearGradient>
+</defs>
+
+<rect x="90" y="90" width="500" height="500" rx="110" fill="url(#bgGrad)"/>
+
+<text x="185" y="300" font-family="'SF Mono','Consolas',monospace" font-size="120" font-weight="600" fill="#38bdf8">&gt;</text>
+<text x="290" y="300" font-family="'SF Mono','Consolas',monospace" font-size="120" font-weight="600" fill="#38bdf8">_</text>
+
+<rect x="180" y="380" width="320" height="140" rx="70" fill="#0b1220" stroke="#334155" stroke-width="3"/>
+
+<path d="M 180 450 A 70 70 0 0 1 250 380 L 340 380 A 70 70 0 0 1 340 520 L 250 520 A 70 70 0 0 1 180 450 Z" fill="#334155" opacity="0.55"/>
+
+<path d="M 500 450 A 70 70 0 0 1 430 520 L 340 520 A 70 70 0 0 1 340 380 L 430 380 A 70 70 0 0 1 500 450 Z" fill="#22c55e"/>
+
+<circle cx="430" cy="450" r="52" fill="url(#knobGrad)"/>
+
+</svg>

@@ -14,9 +14,10 @@ try:
 except ImportError:
     winreg = None
 
+draw_frame = None
 try:
     import pystray
-    from PIL import Image, ImageDraw
+    from icon_render import draw_frame
 
     HAS_TRAY = True
 except ImportError:
@@ -163,6 +164,8 @@ class ProxyToggleApp:
     def __init__(self):
         self.cfg = load_config()
         self.tray_icon = None
+        self._tray_progress = None
+        self._tray_anim = None
         self.root = tk.Tk()
         self.root.title(APP_NAME)
         self.root.resizable(False, False)
@@ -240,7 +243,11 @@ class ProxyToggleApp:
             self.status_lbl.configure(foreground="#777777")
             self.toggle_btn.configure(text="开启代理")
         if self.tray_icon is not None:
-            self.tray_icon.icon = _make_tray_image(bool(current))
+            target = 1.0 if current else 0.0
+            if self._tray_progress is None:
+                self._set_tray_progress(target)
+            else:
+                self._animate_tray(target)
             self.tray_icon.title = f"{APP_NAME} - {'已开启' if current else '已关闭'}"
 
     def toggle(self):
@@ -270,8 +277,13 @@ class ProxyToggleApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("退出", self._quit),
         )
+        current = bool(get_proxy_status())
+        self._tray_progress = 1.0 if current else 0.0
         self.tray_icon = pystray.Icon(
-            APP_NAME, _make_tray_image(bool(get_proxy_status())), APP_NAME, menu
+            APP_NAME,
+            draw_frame(64, progress=self._tray_progress),
+            f"{APP_NAME} - {'已开启' if current else '已关闭'}",
+            menu,
         )
         threading.Thread(target=self.tray_icon.run, daemon=True).start()
 
@@ -280,6 +292,43 @@ class ProxyToggleApp:
 
     def _tray_toggle(self, *_):
         self.root.after(0, self.toggle)
+
+    def _set_tray_progress(self, progress):
+        """Set a static tray frame and remember the current slider position."""
+        self._tray_progress = progress
+        if self.tray_icon is not None:
+            self.tray_icon.icon = draw_frame(64, progress=progress)
+
+    def _animate_tray(self, target, steps=14, delay=22):
+        """Slide the tray toggle from its current position to ``target`` (0..1).
+
+        ``0`` is OFF (knob left, gray) and ``1`` is ON (knob right, green).
+        Frames are advanced on the Tk main loop with ``after`` for thread safety.
+        """
+        if self.tray_icon is None:
+            self._tray_progress = target
+            return
+        if self._tray_progress == target:
+            self._set_tray_progress(target)
+            return
+        if self._tray_anim is not None:
+            try:
+                self.root.after_cancel(self._tray_anim)
+            except Exception:
+                pass
+            self._tray_anim = None
+        start = self._tray_progress if self._tray_progress is not None else target
+
+        def step(i):
+            if i > steps:
+                self._tray_anim = None
+                self._set_tray_progress(target)
+                return
+            eased = (i / steps) ** 2 * (3 - 2 * (i / steps))  # smoothstep
+            self._set_tray_progress(start + (target - start) * eased)
+            self._tray_anim = self.root.after(delay, step, i + 1)
+
+        step(0)
 
     def _on_close(self):
         if self.tray_icon is not None:
@@ -294,20 +343,6 @@ class ProxyToggleApp:
 
     def run(self):
         self.root.mainloop()
-
-
-def _make_tray_image(enabled):
-    size = 64
-    accent = (37, 211, 102, 255) if enabled else (107, 114, 128, 255)
-    image = Image.new("RGBA", (size, size), (14, 23, 38, 255))
-    draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle((3, 3, 60, 60), radius=15, fill=(14, 23, 38, 255))
-    draw.line((17, 22, 47, 22), fill=accent, width=7)
-    draw.line((17, 42, 47, 42), fill=accent, width=7)
-    draw.ellipse((10, 15, 24, 29), fill=(245, 247, 250, 255))
-    draw.ellipse((40, 35, 54, 49), fill=(245, 247, 250, 255))
-    draw.line((22, 27, 42, 37), fill=accent, width=5)
-    return image
 
 
 if __name__ == "__main__":
